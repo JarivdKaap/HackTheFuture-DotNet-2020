@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Numerics;
+using HTF2020.Contracts.Models;
 
 public class Node
 {
@@ -21,6 +22,8 @@ public class Node
     }
 
     public bool Walkable { get; set; }
+
+    public Tile Tile { get; set; }
 
     public Node(Point pos, bool walkable, float weight = 1)
     {

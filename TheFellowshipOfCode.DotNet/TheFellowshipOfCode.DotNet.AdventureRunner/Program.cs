@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using HTF2020.GameController.Builders;
 using HTF2020.GameController.State;
 using McMaster.Extensions.CommandLineUtils;
-using TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding;
+using TheFellowshipOfCode.DotNet.YourAdventure;
 
 namespace TheFellowshipOfCode.DotNet.AdventureRunner
 {

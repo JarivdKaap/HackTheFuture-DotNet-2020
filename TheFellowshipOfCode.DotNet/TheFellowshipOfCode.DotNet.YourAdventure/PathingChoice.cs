@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Text;
 using HTF2020.Contracts.Enums;
 using HTF2020.Contracts.Models;
-using TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding;
 
 namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
@@ -16,16 +15,44 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
             Stack<Node> nodes = astar.FindPath(startNode, finishMode);
 
-            Node correctNode = nodes.Peek();
+            Node firstNode = nodes.Peek();
 
-            if (correctNode.Position.Y < startNode.Position.Y)
+            if (firstNode.Position.Y < startNode.Position.Y)
                 return TurnAction.WalkNorth;
-            if (correctNode.Position.Y > startNode.Position.Y)
+            if (firstNode.Position.Y > startNode.Position.Y)
                 return TurnAction.WalkSouth;
-            if (correctNode.Position.X < startNode.Position.X)
+            if (firstNode.Position.X > startNode.Position.X)
                 return TurnAction.WalkEast;
-            if (correctNode.Position.X > startNode.Position.X)
+            if (firstNode.Position.X < startNode.Position.X)
+                return TurnAction.WalkWest;
+
+            return TurnAction.Pass;
+        }
+
+        public TurnAction MoveToClosestTreasure(ExploredMap exploredMap, Location partyLocation, TurnAction[] possibleActions)
+        {
+            Stack<Node> closestPath = null;
+            Astar astar = new Astar(exploredMap.ConvertedMap);
+            Node startNode = new Node(new Point(partyLocation.X, partyLocation.Y), true);
+            foreach (var treasureNode in exploredMap.TreasureNodes)
+            {
+                Stack<Node> nodes = astar.FindPath(startNode, treasureNode);
+                if (closestPath == null || closestPath.Count > nodes.Count)
+                {
+                    closestPath = nodes;
+                }
+            }
+
+            Node firstNode = closestPath.Peek();
+
+            if (firstNode.Position.Y < startNode.Position.Y)
+                return TurnAction.WalkNorth;
+            if (firstNode.Position.Y > startNode.Position.Y)
+                return TurnAction.WalkSouth;
+            if (firstNode.Position.X > startNode.Position.X)
                 return TurnAction.WalkEast;
+            if (firstNode.Position.X < startNode.Position.X)
+                return TurnAction.WalkWest;
 
             return TurnAction.Pass;
         }

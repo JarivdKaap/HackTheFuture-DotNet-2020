@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using HTF2020.Contracts.Enums;
 using HTF2020.Contracts.Models;
 using HTF2020.Contracts.Models.Adventurers;
 using HTF2020.Contracts.Models.Enemies;
 
-namespace TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding
+namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
     public class ExploredMap
     {
@@ -39,14 +40,22 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding
         public void ConvertTilesToNodes()
         {
             ConvertedMap = new List<List<Node>>();
-            for (int i = 0; i < Tiles.GetLength(0); i++)
+            for (int i = 0; i < Tiles.GetLength(1); i++)
             {
                 ConvertedMap.Add(new List<Node>());
-                for (int j = 0; j < Tiles.GetLength(1); j++)
+                for (int j = 0; j < Tiles.GetLength(0); j++)
                 {
                     Tile tile = Tiles[j, i];
                     bool walkable = tile.TerrainType == TerrainType.Grass && tile.TileType != TileType.Wall;
-                    Node node = new Node(new Point(j, i), walkable);
+                    int weight = 1;
+                    if (tile.EnemyGroup != null)
+                    {
+                        weight = tile.EnemyGroup.Enemies.Sum(e => e.Strength + e.Intelligence + e.Constitution);
+                    }
+                    Node node = new Node(new Point(j, i), walkable, weight)
+                    {
+                        Tile = tile
+                    };
 
                     switch (tile.TileType)
                     {
@@ -63,13 +72,28 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding
 
         public void UpdateEnemyAndLoot(Tile[,] tiles)
         {
-            for (int i = 0; i < tiles.GetLength(0); i++)
+            List<Node> newTreasureList = new List<Node>();
+            foreach (var treasureNode in TreasureNodes)
             {
-                for (int j = 0; j < tiles.GetLength(1); j++)
+                Tile tile = tiles[treasureNode.Position.X, treasureNode.Position.Y];
+                if (!tile.TreasureChest.IsEmpty)
                 {
-                    
+                    newTreasureList.Add(treasureNode);
                 }
             }
+
+            TreasureNodes = newTreasureList;
+
+            List<Node> newEnemyList = new List<Node>();
+            foreach (var enemyNode in Enemies)
+            {
+                Tile tile = tiles[enemyNode.Position.X, enemyNode.Position.Y];
+                if (!tile.EnemyGroup.IsDead)
+                {
+                    newEnemyList.Add(enemyNode);
+                }
+            }
+            Enemies = newEnemyList;
         }
     }
 

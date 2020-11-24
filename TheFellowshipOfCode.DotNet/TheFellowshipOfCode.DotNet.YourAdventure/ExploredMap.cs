@@ -19,6 +19,8 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
         private static ExploredMap _exploredMap = null;
 
+        private CharacterManagement characterManagement = CharacterManagement.GetInstance();
+
         private ExploredMap(Tile[,] tiles)
         {
             TreasureNodes = new List<Node>();
@@ -70,26 +72,25 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             }
         }
 
-        public void UpdateEnemyAndLoot(Tile[,] tiles)
+        public void UpdateEnemyAndLoot()
         {
             List<Node> newTreasureList = new List<Node>();
             foreach (var treasureNode in TreasureNodes)
             {
-                Tile tile = tiles[treasureNode.Position.X, treasureNode.Position.Y];
-                if (!tile.TreasureChest.IsEmpty)
+                if (!treasureNode.Tile.TreasureChest.IsEmpty)
                 {
                     newTreasureList.Add(treasureNode);
                 }
             }
-
             TreasureNodes = newTreasureList;
 
             List<Node> newEnemyList = new List<Node>();
             foreach (var enemyNode in Enemies)
             {
-                Tile tile = tiles[enemyNode.Position.X, enemyNode.Position.Y];
-                if (!tile.EnemyGroup.IsDead)
+                if (!enemyNode.Tile.EnemyGroup.IsDead)
                 {
+                    enemyNode.Walkable = (characterManagement.TotalCurrentHealth <
+                                          enemyNode.Tile.EnemyGroup.Enemies.Sum(e => e.CurrentHealthPoints) / 2);
                     newEnemyList.Add(enemyNode);
                 }
             }

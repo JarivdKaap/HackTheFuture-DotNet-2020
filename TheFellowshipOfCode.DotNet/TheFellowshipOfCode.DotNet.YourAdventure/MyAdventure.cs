@@ -15,6 +15,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
     {
         private readonly Random _random = new Random();
         private readonly PathingChoice pathingChoice = new PathingChoice();
+        private CharacterManagement characterManagement = CharacterManagement.GetInstance();
 
         public Task<Party> CreateParty(CreatePartyRequest request)
         {
@@ -41,12 +42,9 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
         public Task<Turn> PlayTurn(PlayTurnRequest request)
         {
-            
-            // 2. If a enemy is next to you, fight him
-            
-
             ExploredMap exploredMap = ExploredMap.GetInstance(request.Map.Tiles);
-            exploredMap.UpdateEnemyAndLoot(request.Map.Tiles);
+            exploredMap.UpdateEnemyAndLoot();
+            characterManagement.CheckCharacter(request.PartyMember);
 
             if (request.PossibleActions.Contains(TurnAction.Loot))
             {
@@ -68,47 +66,24 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             // Repeat till all treasures are found
             if (exploredMap.TreasureNodes.Count > 0)
             {
-                return Task.FromResult(new Turn(pathingChoice.MoveToClosestTreasure(exploredMap, request.PartyLocation, request.PossibleActions)));
+                TurnAction action = pathingChoice.MoveToClosestTreasure(exploredMap, request.PartyLocation);
+                if (action != TurnAction.Pass)
+                {
+                    return Task.FromResult(new Turn(action));
+                }
             }
 
-            // TODO: Go to places with loot
+            if (exploredMap.Enemies.Count > 0 && (characterManagement.CharacterList.Count == 0 || characterManagement.TotalCurrentHealth > 50) )
+            {
+                TurnAction action = pathingChoice.GoToEnemies(exploredMap, request.PartyLocation);
+                if (action != TurnAction.Pass)
+                {
+                    return Task.FromResult(new Turn(action));
+                }
+            }
 
             // Go to the exit
-            return Task.FromResult(new Turn(pathingChoice.GoToFinish(exploredMap, request.PartyLocation, request.PossibleActions)));
-
-            //return PlayToEnd();
-
-            Task<Turn> PlayToEnd()
-            {
-                return Task.FromResult(request.PossibleActions.Contains(TurnAction.WalkSouth) ? new Turn(TurnAction.WalkSouth) : new Turn(request.PossibleActions[_random.Next(request.PossibleActions.Length)]));
-            }
-
-            Task<Turn> Strategic()
-            {
-                const double goingEastBias = 0.35;
-                const double goingSouthBias = 0.25;
-                if (request.PossibleActions.Contains(TurnAction.Loot))
-                {
-                    return Task.FromResult(new Turn(TurnAction.Loot));
-                }
-
-                if (request.PossibleActions.Contains(TurnAction.Attack))
-                {
-                    return Task.FromResult(new Turn(TurnAction.Attack));
-                }
-
-                if (request.PossibleActions.Contains(TurnAction.WalkEast) && _random.NextDouble() > (1 - goingEastBias))
-                {
-                    return Task.FromResult(new Turn(TurnAction.WalkEast));
-                }
-
-                if (request.PossibleActions.Contains(TurnAction.WalkSouth) && _random.NextDouble() > (1 - goingSouthBias))
-                {
-                    return Task.FromResult(new Turn(TurnAction.WalkSouth));
-                }
-
-                return Task.FromResult(new Turn(request.PossibleActions[_random.Next(request.PossibleActions.Length)]));
-            }
+            return Task.FromResult(new Turn(pathingChoice.GoToFinish(exploredMap, request.PartyLocation)));
         }
     }
 }

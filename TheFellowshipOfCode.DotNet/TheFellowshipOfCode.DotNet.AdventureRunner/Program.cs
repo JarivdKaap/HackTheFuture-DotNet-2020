@@ -56,7 +56,7 @@ namespace TheFellowshipOfCode.DotNet.AdventureRunner
             Console.WriteLine("Total rounds played: " + turn.TurnCounter);
             Console.WriteLine("Total balance: " + turn.Party.Balance);
             Console.WriteLine("Total health left: " +
-                              turn.Party.Members.Select(member => member.HealthPoints).Sum());
+                              turn.Party.Members.Select(member => member.CurrentHealthPoints).Sum());
             Console.WriteLine("==================================");
         }
     }

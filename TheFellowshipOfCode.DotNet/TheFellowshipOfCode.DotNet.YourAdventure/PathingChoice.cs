@@ -9,59 +9,71 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
     class PathingChoice
     {
-        private TurnAction FindPath(ExploredMap exploredMap, Node startNode, Node finishMode)
+        private TurnAction GetTurnActionForNodes(Node startNode, Node endNode)
         {
-            Astar astar = new Astar(exploredMap.ConvertedMap);
-
-            Stack<Node> nodes = astar.FindPath(startNode, finishMode);
-
-            Node firstNode = nodes.Peek();
-
-            if (firstNode.Position.Y < startNode.Position.Y)
+            if (endNode.Position.Y < startNode.Position.Y)
                 return TurnAction.WalkNorth;
-            if (firstNode.Position.Y > startNode.Position.Y)
+            if (endNode.Position.Y > startNode.Position.Y)
                 return TurnAction.WalkSouth;
-            if (firstNode.Position.X > startNode.Position.X)
+            if (endNode.Position.X > startNode.Position.X)
                 return TurnAction.WalkEast;
-            if (firstNode.Position.X < startNode.Position.X)
+            if (endNode.Position.X < startNode.Position.X)
                 return TurnAction.WalkWest;
 
             return TurnAction.Pass;
         }
 
-        public TurnAction MoveToClosestTreasure(ExploredMap exploredMap, Location partyLocation, TurnAction[] possibleActions)
+        private TurnAction FindPath(ExploredMap exploredMap, Node startNode, Node finishMode)
+        {
+            Astar aStar = new Astar(exploredMap.ConvertedMap);
+
+            Stack<Node> nodes = aStar.FindPath(startNode, finishMode);
+
+            Node pathNode = nodes.Peek();
+
+            return GetTurnActionForNodes(startNode, pathNode);
+        }
+
+        private Stack<Node> FindPathToClosestNode(ExploredMap exploredMap, Node startNode, List<Node> endNodes)
         {
             Stack<Node> closestPath = null;
-            Astar astar = new Astar(exploredMap.ConvertedMap);
-            Node startNode = new Node(new Point(partyLocation.X, partyLocation.Y), true);
-            foreach (var treasureNode in exploredMap.TreasureNodes)
+            Astar aStar = new Astar(exploredMap.ConvertedMap);
+            foreach (var node in endNodes)
             {
-                Stack<Node> nodes = astar.FindPath(startNode, treasureNode);
+                Stack<Node> nodes = aStar.FindPath(startNode, node);
                 if (closestPath == null || closestPath.Count > nodes.Count)
                 {
                     closestPath = nodes;
                 }
             }
 
-            Node firstNode = closestPath.Peek();
-
-            if (firstNode.Position.Y < startNode.Position.Y)
-                return TurnAction.WalkNorth;
-            if (firstNode.Position.Y > startNode.Position.Y)
-                return TurnAction.WalkSouth;
-            if (firstNode.Position.X > startNode.Position.X)
-                return TurnAction.WalkEast;
-            if (firstNode.Position.X < startNode.Position.X)
-                return TurnAction.WalkWest;
-
-            return TurnAction.Pass;
+            return closestPath;
         }
 
-        public TurnAction GoToFinish(ExploredMap exploredMap, Location partyLocation, TurnAction[] possibleActions)
+        public TurnAction MoveToClosestTreasure(ExploredMap exploredMap, Location partyLocation)
+        {
+            Node startNode = new Node(new Point(partyLocation.X, partyLocation.Y), true);
+            Stack<Node> path = FindPathToClosestNode(exploredMap, startNode, exploredMap.TreasureNodes);
+
+            Node pathNode = path.Peek();
+
+            return GetTurnActionForNodes(startNode, pathNode);
+        }
+
+        public TurnAction GoToEnemies(ExploredMap exploredMap, Location partyLocation)
+        {
+            Node startNode = new Node(new Point(partyLocation.X, partyLocation.Y), true);
+            Stack<Node> path = FindPathToClosestNode(exploredMap, startNode, exploredMap.Enemies);
+
+            Node pathNode = path.Peek();
+
+            return GetTurnActionForNodes(startNode, pathNode);
+        }
+
+        public TurnAction GoToFinish(ExploredMap exploredMap, Location partyLocation)
         {
             return FindPath(exploredMap, new Node(new Point(partyLocation.X, partyLocation.Y), true),
                 exploredMap.FinishNode);
         }
     }
-
 }

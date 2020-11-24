@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using HTF2020.GameController.Builders;
 using HTF2020.GameController.State;
 using McMaster.Extensions.CommandLineUtils;
+using TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding;
 
 namespace TheFellowshipOfCode.DotNet.AdventureRunner
 {
@@ -38,6 +39,8 @@ namespace TheFellowshipOfCode.DotNet.AdventureRunner
 
             var builder = new GameBuilder();
             var runner = builder.BuildGameRunner(MapPath, AdventureDllPath).Result;
+
+            ExploredMap.GetInstance(runner.Map.Tiles);
 
             GameState turn;
             do

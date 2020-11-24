@@ -7,12 +7,15 @@ using HTF2020.Contracts.Enums;
 using HTF2020.Contracts.Models;
 using HTF2020.Contracts.Models.Adventurers;
 using HTF2020.Contracts.Requests;
+using TheFellowshipOfCode.DotNet.YourAdventure;
+using TheFellowshipOfCode.DotNet.YourAdventure.Pathfinding;
 
 namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
     public class MyAdventure : IAdventure
     {
         private readonly Random _random = new Random();
+        private readonly PathingChoice pathingChoice = new PathingChoice();
 
         public Task<Party> CreateParty(CreatePartyRequest request)
         {
@@ -30,7 +33,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                     Name = $"Member {i + 1}",
                     Constitution = 11,
                     Strength = 12,
-                    Intelligence = 11
+                    Intelligence = 11 // 34 points
                 });
             }
 
@@ -39,7 +42,25 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
         public Task<Turn> PlayTurn(PlayTurnRequest request)
         {
-            return PlayToEnd();
+            // 1. Get all treasures, a* and go to the one with the least steps
+            // 2. If a enemy is next to you, fight him
+            // 3. Repeat till all treasures are found
+            
+
+            ExploredMap exploredMap = ExploredMap.GetInstance(request.Map.Tiles);
+            exploredMap.UpdateEnemyAndLoot(request.Map.Tiles);
+
+
+
+            if (request.PossibleActions.Contains(TurnAction.Loot))
+            {
+                return Task.FromResult(new Turn(TurnAction.Loot));
+            }
+
+            // 4. Go to the exit
+            return Task.FromResult(new Turn(pathingChoice.GoToFinish(exploredMap, request.PartyLocation, request.PossibleActions)));
+
+            //return PlayToEnd();
 
             Task<Turn> PlayToEnd()
             {

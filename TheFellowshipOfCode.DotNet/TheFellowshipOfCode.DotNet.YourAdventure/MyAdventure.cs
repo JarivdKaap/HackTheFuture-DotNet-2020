@@ -15,7 +15,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
     public class MyAdventure : IAdventure
     {
         private readonly Random _random = new Random();
-        private CharacterManagement characterManagement = CharacterManagement.GetInstance();
+        private CharacterManager _characterManager = CharacterManager.GetInstance();
 
         public Task<Party> CreateParty(CreatePartyRequest request)
         {
@@ -31,11 +31,11 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                 {
                     Id = i,
                     Name = $"Member {i + 1}",
-                    Constitution = 11,
-                    Strength = 12,
-                    Intelligence = 11 // 34 points
+                    Constitution = 8,
+                    Strength = 8,
+                    Intelligence = 18 // 34 points
                 };
-                characterManagement.AddCharacter(fighter);
+                _characterManager.AddCharacter(fighter);
                 party.Members.Add(fighter);
             }
 
@@ -44,9 +44,14 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
         public Task<Turn> PlayTurn(PlayTurnRequest request)
         {
+            if (_characterManager.TotalCurrentHealth <= 0)
+            {
+                return Task.FromResult(new Turn(TurnAction.Pass));
+            }
+
             ExploredMap exploredMap = ExploredMap.GetInstance(request.Map.Tiles);
-            exploredMap.UpdateEnemyAndLoot(request.Map.Tiles, characterManagement);
-            characterManagement.AddCharacter(request.PartyMember);
+            exploredMap.UpdateEnemyAndLoot(request.Map.Tiles, _characterManager);
+            _characterManager.AddCharacter(request.PartyMember);
 
             // Always align whenever possible
             if (request.PossibleActions.Contains(TurnAction.Loot))
@@ -54,8 +59,8 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                 return Task.FromResult(new Turn(TurnAction.Loot));
             }
 
-            // Grab the potion if we're incombat and the health is less than 50
-            if (request.IsCombat && request.PartyMember.CurrentHealthPoints < 50 &&
+            // Grab the potion if we're in combat and the health is less than half the original points
+            if (request.IsCombat && request.PartyMember.CurrentHealthPoints < request.PartyMember.HealthPoints / 2 &&
                 request.PossibleActions.Any(pa => pa == TurnAction.DrinkPotion))
             {
                 return Task.FromResult(new Turn(TurnAction.DrinkPotion));

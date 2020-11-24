@@ -28,7 +28,7 @@ namespace TheFellowshipOfCode.DotNet.AdventureRunner
             "This is the time between turns in milliseconds. Only use this if you also use the '-v|--verbose' option.",
             CommandOptionType.SingleValue)]
         // ReSharper disable once UnassignedGetOnlyAutoProperty
-        private int TimeBetweenTurns { get; } = 1000;
+        private int TimeBetweenTurns { get; } = 500;
 
         public static void Main(string[] args) => CommandLineApplication.Execute<Program>(args);
 
@@ -39,8 +39,6 @@ namespace TheFellowshipOfCode.DotNet.AdventureRunner
 
             var builder = new GameBuilder();
             var runner = builder.BuildGameRunner(MapPath, AdventureDllPath).Result;
-
-            ExploredMap.GetInstance(runner.Map.Tiles);
 
             GameState turn;
             do

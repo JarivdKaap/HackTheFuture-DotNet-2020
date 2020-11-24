@@ -6,24 +6,24 @@ using HTF2020.Contracts.Models.Adventurers;
 
 namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
-    public class CharacterManagement
+    public class CharacterManager
     {
         public List<Character> CharacterList{ get; set;}
 
-        private static CharacterManagement _characterManagement = null;
+        private static CharacterManager _characterManager = null;
 
         public int TotalCurrentHealth => CharacterList.Sum(c => c.CurrentHealthPoints);
 
-        public static CharacterManagement GetInstance()
+        public static CharacterManager GetInstance()
         {
-            if(_characterManagement == null)
+            if(_characterManager == null)
             {
-                return new CharacterManagement();
+                return new CharacterManager();
             }
-            return _characterManagement;
+            return _characterManager;
         }
 
-        private CharacterManagement()
+        private CharacterManager()
         {
             CharacterList = new List<Character>();
         }

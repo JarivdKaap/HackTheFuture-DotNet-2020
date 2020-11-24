@@ -50,7 +50,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                     int weight = 1;
                     if (tile.EnemyGroup != null)
                     {
-                        weight = tile.EnemyGroup.Enemies.Sum(e => e.Strength + e.Intelligence + e.Constitution);
+                        weight = tile.EnemyGroup.Enemies.Sum(e => e.Strength + e.Intelligence + e.Constitution + e.HealthPoints);
                     }
                     Node node = new Node(new Point(j, i), walkable, weight)
                     {
@@ -70,7 +70,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             }
         }
 
-        public void UpdateEnemyAndLoot(Tile[,] tiles, CharacterManagement characterManagement)
+        public void UpdateEnemyAndLoot(Tile[,] tiles, CharacterManager characterManager)
         {
             List<Node> newTreasureList = new List<Node>();
             foreach (var treasureNode in TreasureNodes)
@@ -94,7 +94,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                         if (!tile.EnemyGroup.IsDead || tile.EnemyGroup.Loot > 0)
                         {
                             Node enemyNode = ConvertedMap[i][j];
-                            enemyNode.Walkable = (characterManagement.CharacterList.Count == 0 || characterManagement.TotalCurrentHealth >
+                            enemyNode.Walkable = (characterManager.CharacterList.Count == 0 || characterManager.TotalCurrentHealth >
                                 enemyNode.Tile.EnemyGroup.Enemies.Sum(e => e.CurrentHealthPoints) / 2);
 
                             if(enemyNode.Walkable)

@@ -8,13 +8,13 @@ using HTF2020.Contracts.Models;
 using HTF2020.Contracts.Models.Adventurers;
 using HTF2020.Contracts.Requests;
 using TheFellowshipOfCode.DotNet.YourAdventure;
+using TheFellowshipOfCode.DotNet.YourAdventure.PathChoices;
 
 namespace TheFellowshipOfCode.DotNet.YourAdventure
 {
     public class MyAdventure : IAdventure
     {
         private readonly Random _random = new Random();
-        private readonly PathingChoice pathingChoice = new PathingChoice();
         private CharacterManagement characterManagement = CharacterManagement.GetInstance();
 
         public Task<Party> CreateParty(CreatePartyRequest request)
@@ -27,14 +27,16 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
             for (var i = 0; i < request.MembersCount; i++)
             {
-                party.Members.Add(new Fighter()
+                Fighter fighter = new Fighter()
                 {
                     Id = i,
                     Name = $"Member {i + 1}",
                     Constitution = 11,
                     Strength = 12,
                     Intelligence = 11 // 34 points
-                });
+                };
+                characterManagement.AddCharacter(fighter);
+                party.Members.Add(fighter);
             }
 
             return Task.FromResult(party);
@@ -43,20 +45,23 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
         public Task<Turn> PlayTurn(PlayTurnRequest request)
         {
             ExploredMap exploredMap = ExploredMap.GetInstance(request.Map.Tiles);
-            exploredMap.UpdateEnemyAndLoot();
-            characterManagement.CheckCharacter(request.PartyMember);
+            exploredMap.UpdateEnemyAndLoot(request.Map.Tiles, characterManagement);
+            characterManagement.AddCharacter(request.PartyMember);
 
+            // Always align whenever possible
             if (request.PossibleActions.Contains(TurnAction.Loot))
             {
                 return Task.FromResult(new Turn(TurnAction.Loot));
             }
 
+            // Grab the potion if we're incombat and the health is less than 50
             if (request.IsCombat && request.PartyMember.CurrentHealthPoints < 50 &&
                 request.PossibleActions.Any(pa => pa == TurnAction.DrinkPotion))
             {
                 return Task.FromResult(new Turn(TurnAction.DrinkPotion));
             }
 
+            // Always attack when possible, our pathfinding handles whether the enemy is too strong
             if (request.PossibleActions.Contains(TurnAction.Attack))
             {
                 return Task.FromResult(new Turn(TurnAction.Attack));
@@ -66,24 +71,25 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             // Repeat till all treasures are found
             if (exploredMap.TreasureNodes.Count > 0)
             {
-                TurnAction action = pathingChoice.MoveToClosestTreasure(exploredMap, request.PartyLocation);
+                TurnAction action = new TreasuresPathChoice(exploredMap, request.PartyLocation).FindPath();
                 if (action != TurnAction.Pass)
                 {
                     return Task.FromResult(new Turn(action));
                 }
             }
 
-            if (exploredMap.Enemies.Count > 0 && (characterManagement.CharacterList.Count == 0 || characterManagement.TotalCurrentHealth > 50) )
+            // If there are enemies we can handle, go to them
+            if (exploredMap.PossibleEnemies.Count > 0)
             {
-                TurnAction action = pathingChoice.GoToEnemies(exploredMap, request.PartyLocation);
+                TurnAction action = new EnemiesPathChoice(exploredMap, request.PartyLocation).FindPath();
                 if (action != TurnAction.Pass)
                 {
                     return Task.FromResult(new Turn(action));
                 }
             }
 
-            // Go to the exit
-            return Task.FromResult(new Turn(pathingChoice.GoToFinish(exploredMap, request.PartyLocation)));
+            // Go to the finish
+            return Task.FromResult(new Turn(new FinishPathChoice(exploredMap, request.PartyLocation).FindPath()));
         }
     }
 }

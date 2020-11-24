@@ -28,7 +28,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             CharacterList = new List<Character>();
         }
 
-        public void CheckCharacter(Character character)
+        public void AddCharacter(Character character)
         {
             if (character != null && !CharacterList.Contains(character))
             {

@@ -34,4 +34,9 @@ public class Node
         Weight = weight;
         Walkable = walkable;
     }
+
+    public Node(int xCoord, int yCoord) : this(new Point(xCoord, yCoord), true)
+    {
+        
+    }
 }

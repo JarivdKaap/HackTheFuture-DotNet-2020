@@ -14,17 +14,15 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
         public Node FinishNode { get; set; }
         public Tile[,] Tiles { get; set; }
         public List<Node> TreasureNodes { get; set; }
-        public List<Node> Enemies { get; set; }
+        public List<Node> PossibleEnemies { get; set; }
         public List<List<Node>> ConvertedMap { get; set; }
 
         private static ExploredMap _exploredMap = null;
 
-        private CharacterManagement characterManagement = CharacterManagement.GetInstance();
-
         private ExploredMap(Tile[,] tiles)
         {
             TreasureNodes = new List<Node>();
-            Enemies = new List<Node>();
+            PossibleEnemies = new List<Node>();
             this.Tiles = tiles;
             ConvertTilesToNodes();
         }
@@ -61,7 +59,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
 
                     switch (tile.TileType)
                     {
-                        case TileType.Enemy: Enemies.Add(node); break;
+                        case TileType.Enemy: PossibleEnemies.Add(node); break;
                         case TileType.Finish: FinishNode = node; break;
                         case TileType.TreasureChest: TreasureNodes.Add(node); break;
                         default: break;
@@ -72,7 +70,7 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
             }
         }
 
-        public void UpdateEnemyAndLoot()
+        public void UpdateEnemyAndLoot(Tile[,] tiles, CharacterManagement characterManagement)
         {
             List<Node> newTreasureList = new List<Node>();
             foreach (var treasureNode in TreasureNodes)
@@ -82,19 +80,30 @@ namespace TheFellowshipOfCode.DotNet.YourAdventure
                     newTreasureList.Add(treasureNode);
                 }
             }
+
             TreasureNodes = newTreasureList;
 
             List<Node> newEnemyList = new List<Node>();
-            foreach (var enemyNode in Enemies)
+            for (int i = 0; i < tiles.GetLength(1); i++)
             {
-                if (!enemyNode.Tile.EnemyGroup.IsDead)
+                for (int j = 0; j < tiles.GetLength(0); j++)
                 {
-                    enemyNode.Walkable = (characterManagement.TotalCurrentHealth <
-                                          enemyNode.Tile.EnemyGroup.Enemies.Sum(e => e.CurrentHealthPoints) / 2);
-                    newEnemyList.Add(enemyNode);
+                    Tile tile = Tiles[j, i];
+                    if (tile.TileType == TileType.Enemy)
+                    {
+                        if (!tile.EnemyGroup.IsDead || tile.EnemyGroup.Loot > 0)
+                        {
+                            Node enemyNode = ConvertedMap[i][j];
+                            enemyNode.Walkable = (characterManagement.CharacterList.Count == 0 || characterManagement.TotalCurrentHealth >
+                                enemyNode.Tile.EnemyGroup.Enemies.Sum(e => e.CurrentHealthPoints) / 2);
+
+                            if(enemyNode.Walkable)
+                                newEnemyList.Add(enemyNode);
+                        }
+                    }
                 }
             }
-            Enemies = newEnemyList;
+            PossibleEnemies = newEnemyList;
         }
     }
 
